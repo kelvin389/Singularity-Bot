@@ -22,3 +22,4 @@ async def on_message(msg):
 
 token = os.getenv("DISCORD_TOKEN")
 client.run(token)
+
