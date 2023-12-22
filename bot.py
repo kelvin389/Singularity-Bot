@@ -22,19 +22,19 @@ class ReadyButtons(discord.ui.View):
         #interaction.response.send_message("maybe?")
         print("maybed")
 
-class ControlPanelButtons(discord.ui.view):
+class ControlPanelButtons(discord.ui.View):
     def __init__(self):
         super().__init__()
 
     @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
-    async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
+    async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         #interaction.response.send_message("accept")
         #button.
-        print("accepted")
+        print("ping")
     @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
-    async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
+    async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
         #interaction.response.send_message("decline")
-        print("declined")
+        print("cancel")
 
 load_dotenv()
 intents = discord.Intents.all()
@@ -101,7 +101,7 @@ def participants_to_users(host, participants_lst):
     user_lst.append(host_u)
     # turn participants list into User object list
     for p_str in participants_lst:
-        u = User(p_str)
+        u = User.User(p_str)
         user_lst.append(u)
     
     return user_lst
