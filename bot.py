@@ -10,12 +10,16 @@ class ReadyButtons(discord.ui.View):
 
     @discord.ui.button(label="✅", row=1, style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("accept")
+        #button.
         print("accepted")
     @discord.ui.button(label="❌", row=1, style=discord.ButtonStyle.blurple)
     async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("decline")
         print("declined")
     @discord.ui.button(label="🤔", row=1, style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("maybe?")
         print("maybed")
 
 load_dotenv()
@@ -34,8 +38,8 @@ async def sync(interaction: discord.Interaction):
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
 @discord.app_commands.describe(event="What's happening?")
-@discord.app_commands.describe(time="Does not need to follow any specific format; do whatever your guests will understand")
-@discord.app_commands.describe(participants="Specify who you want to come by mentioning them with @, similar to how you would ping them. (eg. @kal @BenAstromo)")
+@discord.app_commands.describe(time="Does not need to follow any specific format; do whatever the participants will understand")
+@discord.app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
 async def make_request(interaction: discord.Interaction, event: str, time: str, participants: str):
     embed = discord.Embed()
     embed.title = f'{event} at {time}'
@@ -48,7 +52,8 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
     print("participants: ", participants)
 
     # list of participants each in format "<@[id]>"
-    participants_lst = participants.split(" ") 
+    participants = participants.strip()
+    participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
     user_lst = participants_to_users(interaction.user.id, participants_lst)
 
     # construct list of users with their respective emojis
