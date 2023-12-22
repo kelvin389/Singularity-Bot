@@ -33,9 +33,9 @@ async def sync(interaction: discord.Interaction):
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
-@discord.app_commands.describe(event="Any String Input")
-@discord.app_commands.describe(time="Any String Input")
-@discord.app_commands.describe(participants="Mention / @ Input")
+@discord.app_commands.describe(event="What's happening?")
+@discord.app_commands.describe(time="Does not need to follow any specific format; do whatever your guests will understand")
+@discord.app_commands.describe(participants="Specify who you want to come by mentioning them with @, similar to how you would ping them. (eg. @kal @BenAstromo)")
 async def make_request(interaction: discord.Interaction, event: str, time: str, participants: str):
     embed = discord.Embed()
     embed.title = f'{event} at {time}'
