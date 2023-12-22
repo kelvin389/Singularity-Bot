@@ -2,25 +2,39 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from User import User
+import User
 
 class ReadyButtons(discord.ui.View): 
     def __init__(self):
         super().__init__()
 
-    @discord.ui.button(label="✅", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
         #interaction.response.send_message("accept")
         #button.
         print("accepted")
-    @discord.ui.button(label="❌", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
         #interaction.response.send_message("decline")
         print("declined")
-    @discord.ui.button(label="🤔", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
         #interaction.response.send_message("maybe?")
         print("maybed")
+
+class ControlPanelButtons(discord.ui.view):
+    def __init__(self):
+        super().__init__()
+
+    @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
+    async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("accept")
+        #button.
+        print("accepted")
+    @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
+    async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("decline")
+        print("declined")
 
 load_dotenv()
 intents = discord.Intents.all()
@@ -66,9 +80,16 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
     # send all users a copy of the message
     for u in user_lst:
         user = bot.get_user(u.id)
-        await user.send(embed=embed, view=ready_buttons)
+        
+        # send the host control panel buttons, other participants ready buttons
+        if u.status == User.STATUS_HOST:
+            cp_buttons = ControlPanelButtons()
+            await user.send(embed=embed, view=cp_buttons)
+        else:
+            ready_buttons = ReadyButtons()
+            await user.send(embed=embed, view=ready_buttons)
 
-    await interaction.response.send_message("Event successfully set up", ephemeral=True)
+    await interaction.response.send_message("Event successfully set up. ", ephemeral=True)
 
 
 # convert host and list of participants to a list of users.
@@ -76,7 +97,7 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
 def participants_to_users(host, participants_lst): 
     user_lst = []   
 
-    host_u = User(host, True)
+    host_u = User.User(host, True)
     user_lst.append(host_u)
     # turn participants list into User object list
     for p_str in participants_lst:
