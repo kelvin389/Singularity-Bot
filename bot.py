@@ -63,6 +63,8 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
         user = bot.get_user(u.id)
         await user.send(embed=embed, view=ready_buttons)
 
+    await interaction.response.send_message("Event successfully set up", ephemeral=True)
+
 
 # convert host and list of participants to a list of users.
 # host is int, participants list is list of strings: ["<@[id1]>", "<@[id2]>", ...]
