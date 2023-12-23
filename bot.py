@@ -2,93 +2,39 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-import re
-
-
-
-
-
-# TODO: needs to be in new file
-STATUS_HOST = 0
-STATUS_UNDECIDED = 1
-STATUS_ACCEPTED = 2
-STATUS_REJECTED = 3
-STATUS_MAYBE = 4
-
-EMOJI_HOST = "👑"
-EMOJI_UNDECIDED = "❔"
-EMOJI_ACCEPTED = "✅"
-EMOJI_REJECTED = "❌"
-EMOJI_MAYBE = "🤔"
-
-class User:
-    id_str: str
-    id: int
-    _status: int
-    emoji: str
-    note: str
-
-    # id_input is an integer containing only the user id when host=True
-    # id_input is a string of format <@[id]> when host=False
-    def __init__(self, id_input, host=False):
-        self.note = ""
-
-        if host:
-            self.id = id_input
-            self.id_str = "<@" + str(id_input) + ">"
-            self.status = 0
-            self.emoji = EMOJI_HOST
-            #set_status(0)
-        else:
-            # extract id from string
-            match = re.search(r"<@(\d+)>", id_input)
-            self.id = int(match.group(1))
-            self.id_str = id_input
-            self.status = 1
-            self.emoji = EMOJI_UNDECIDED
-            #set_status(1)
-
-    def set_status(self, status):
-        self._status = status
-        
-        if status == STATUS_HOST:
-            self.emoji = EMOJI_HOST
-        elif status == STATUS_UNDECIDED:
-            self.emoji = EMOJI_UNDECIDED
-        elif status == STATUS_ACCEPTED:
-            self.emoji = EMOJI_ACCEPTED
-        elif status == STATUS_REJECTED:
-            self.emoji = EMOJI_REJECTED
-        elif status == STATUS_MAYBE:
-            self.emoji = EMOJI_MAYBE
-        else:
-            self.emoji = "how"
-
-    def get_status(self):
-        return self._status
-
-    status = property(get_status, set_status)
-
-
-
-
-
-
-
+import User
 
 class ReadyButtons(discord.ui.View): 
     def __init__(self):
         super().__init__()
 
-    @discord.ui.button(label="✅", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("accept")
+        #button.
         print("accepted")
-    @discord.ui.button(label="❌", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("decline")
         print("declined")
-    @discord.ui.button(label="🤔", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("maybe?")
         print("maybed")
+
+class ControlPanelButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+
+    @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
+    async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("accept")
+        #button.
+        print("ping")
+    @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
+    async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
+        #interaction.response.send_message("decline")
+        print("cancel")
 
 load_dotenv()
 intents = discord.Intents.all()
@@ -105,9 +51,9 @@ async def sync(interaction: discord.Interaction):
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
-@discord.app_commands.describe(event="Any String Input")
-@discord.app_commands.describe(time="Any String Input")
-@discord.app_commands.describe(participants="Mention / @ Input")
+@discord.app_commands.describe(event="What's happening?")
+@discord.app_commands.describe(time="Does not need to follow any specific format; do whatever the participants will understand")
+@discord.app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
 async def make_request(interaction: discord.Interaction, event: str, time: str, participants: str):
     embed = discord.Embed()
     embed.title = f'{event} at {time}'
@@ -120,7 +66,8 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
     print("participants: ", participants)
 
     # list of participants each in format "<@[id]>"
-    participants_lst = participants.split(" ") 
+    participants = participants.strip()
+    participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
     user_lst = participants_to_users(interaction.user.id, participants_lst)
 
     # construct list of users with their respective emojis
@@ -133,7 +80,16 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
     # send all users a copy of the message
     for u in user_lst:
         user = bot.get_user(u.id)
-        await user.send(embed=embed, view=ready_buttons)
+        
+        # send the host control panel buttons, other participants ready buttons
+        if u.status == User.STATUS_HOST:
+            cp_buttons = ControlPanelButtons()
+            await user.send(embed=embed, view=cp_buttons)
+        else:
+            ready_buttons = ReadyButtons()
+            await user.send(embed=embed, view=ready_buttons)
+
+    await interaction.response.send_message("Event successfully set up. ", ephemeral=True)
 
 
 # convert host and list of participants to a list of users.
@@ -141,11 +97,11 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
 def participants_to_users(host, participants_lst): 
     user_lst = []   
 
-    host_u = User(host, True)
+    host_u = User.User(host, True)
     user_lst.append(host_u)
     # turn participants list into User object list
     for p_str in participants_lst:
-        u = User(p_str)
+        u = User.User(p_str)
         user_lst.append(u)
     
     return user_lst
