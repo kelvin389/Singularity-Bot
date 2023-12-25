@@ -27,13 +27,13 @@ class User:
         if host:
             self.id = id_input
             self.id_str = "<@" + str(id_input) + ">"
-            self.set_status(STATUS_HOST)
+            self.status = STATUS_HOST
         else:
             # extract id from string
             match = re.search(r"<@(\d+)>", id_input)
             self.id = int(match.group(1))
             self.id_str = id_input
-            self.set_status(STATUS_UNDECIDED)
+            self.status = STATUS_UNDECIDED
 
     def set_status(self, status):
         self._status = status
