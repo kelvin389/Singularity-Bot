@@ -1,4 +1,5 @@
 import re
+import discord
 
 STATUS_HOST = 0
 STATUS_UNDECIDED = 1
@@ -13,6 +14,7 @@ EMOJI_REJECTED = "❌"
 EMOJI_MAYBE = "🤔"
 
 class User:
+    #discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
     id_str: str
     id: int
     _status: int

@@ -4,23 +4,26 @@ import os
 from dotenv import load_dotenv
 import User
 
+def update_status(interaction: discord.Interaction, new_status: int):
+    user_id = interaction.user.id
+    # TODO: get the user object that matches user_id and update its status
+
 class ReadyButtons(discord.ui.View): 
     def __init__(self):
         super().__init__()
 
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        #interaction.response.send_message("accept")
-        #button.
-        print("accepted")
+        update_status(interaction, User.STATUS_ACCEPTED)
+        await interaction.response.send_message("Your status has been updated to ✅")
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
-    async def click_decline(self, interaction: discord.Interaction, button: discord.ui.button):
-        #interaction.response.send_message("decline")
-        print("declined")
+    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
+        update_status(interaction, User.STATUS_REJECTED)
+        await interaction.response.send_message("Your status has been updated to ❌")
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        #interaction.response.send_message("maybe?")
-        print("maybed")
+        update_status(interaction, User.STATUS_MAYBE)
+        await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
     def __init__(self):
@@ -28,15 +31,16 @@ class ControlPanelButtons(discord.ui.View):
 
     @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
-        #interaction.response.send_message("accept")
-        #button.
+        await interaction.response.send_message("pinggg")
+        # TODO: figure out where to get 'users' (list of all User objects)
+        #for u in users:
+            #u.discord_user.send("PING!!!")
         print("ping")
     @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
-        #interaction.response.send_message("decline")
+        await interaction.response.send_message("event cancel")
         print("cancel")
 
-load_dotenv()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -106,5 +110,7 @@ def participants_to_users(host, participants_lst):
     
     return user_lst
 
+# load token from .env and run bot
+load_dotenv()
 token = os.getenv("DISCORD_TOKEN")
 bot.run(token)
