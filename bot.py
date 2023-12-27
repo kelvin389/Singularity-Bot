@@ -10,6 +10,7 @@ def update_status(interaction: discord.Interaction, new_status: int, user_lst):
         if u.get_user == user_id:
             u.set_status(new_status)
     # TODO: get the user object that matches user_id and update its status
+    # this shit not working yet
 
 class ReadyButtons(discord.ui.View): 
     def __init__(self, user_lst):
@@ -42,6 +43,7 @@ class ControlPanelButtons(discord.ui.View):
                 user = bot.get_user(u.id)
                 user.send(f'<@{host_id}> pinged you!')
         await interaction.response.send_message(f'You pinged everyone')
+        #TODO: This shit aint working yet
         print("ping")
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
