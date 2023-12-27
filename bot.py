@@ -4,25 +4,29 @@ import os
 from dotenv import load_dotenv
 import User
 
-def update_status(interaction: discord.Interaction, new_status: int):
+def update_status(interaction: discord.Interaction, new_status: int, user_lst):
     user_id = interaction.user.id
+    for u in user_lst:
+        if u.get_user == user_id:
+            u.set_status(new_status)
     # TODO: get the user object that matches user_id and update its status
 
 class ReadyButtons(discord.ui.View): 
-    def __init__(self):
+    def __init__(self, user_lst):
+        self.user_lst = user_lst
         super().__init__()
 
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_ACCEPTED)
+        update_status(interaction, User.STATUS_ACCEPTED, self.user_lst)
         await interaction.response.send_message("Your status has been updated to ✅")
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_REJECTED)
+        update_status(interaction, User.STATUS_REJECTED, self.user_lst)
         await interaction.response.send_message("Your status has been updated to ❌")
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_MAYBE)
+        update_status(interaction, User.STATUS_MAYBE, self.user_lst)
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
@@ -30,18 +34,16 @@ class ControlPanelButtons(discord.ui.View):
         self.user_lst = user_lst
         super().__init__()
 
-    @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Ping Everyone", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
         for u in self.user_lst:
-            user = bot.get_user(u.id)
-            user.send("Ping")
-        await interaction.response.send_message(f'<@{host_id}> pinged you!')
-        # TODO: figure out where to get 'users' (list of all User objects)
-        #for u in users:
-            #u.discord_user.send("PING!!!")
+            if u.id != host_id:
+                user = bot.get_user(u.id)
+                user.send(f'<@{host_id}> pinged you!')
+        await interaction.response.send_message(f'You pinged everyone')
         print("ping")
-    @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
         await interaction.response.send_message("event cancel")
         print("cancel")
@@ -85,7 +87,7 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
         embed_str += f'{u.emoji}{u.id_str} {u.note}\n'
     embed.add_field(name="Participants", value=embed_str, inline=True)
 
-    ready_buttons = ReadyButtons()
+    ready_buttons = ReadyButtons(user_lst)
     # send all users a copy of the message
     for u in user_lst:
         user = bot.get_user(u.id)
@@ -95,7 +97,7 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
             cp_buttons = ControlPanelButtons(user_lst)
             await user.send(embed=embed, view=cp_buttons)
         else:
-            ready_buttons = ReadyButtons()
+            ready_buttons = ReadyButtons(user_lst)
             await user.send(embed=embed, view=ready_buttons)
 
     await interaction.response.send_message("Event successfully set up. ", ephemeral=True)
