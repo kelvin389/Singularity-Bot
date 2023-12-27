@@ -4,8 +4,9 @@ import os
 from dotenv import load_dotenv
 import User
 
-def update_status(interaction: discord.Interaction, new_status: int):
+async def update_status(interaction: discord.Interaction, new_status: int):
     user_id = interaction.user.id
+    await interaction.edit_original_response(content="cocken balls")
     # TODO: get the user object that matches user_id and update its status
 
 class ReadyButtons(discord.ui.View): 
@@ -44,6 +45,9 @@ class ControlPanelButtons(discord.ui.View):
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# this is a normal command, not a slash command.
+# ie. typing '!sync' is the only way to activate this function,
+# cant type /sync
 @bot.command(name="sync")
 async def sync(interaction: discord.Interaction):
     try:
