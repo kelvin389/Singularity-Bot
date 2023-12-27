@@ -34,20 +34,26 @@ class ControlPanelButtons(discord.ui.View):
         self.user_lst = user_lst
         super().__init__()
 
-    @discord.ui.button(label="Ping Everyone", row=1, style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
         for u in self.user_lst:
             if u.id != host_id:
                 user = bot.get_user(u.id) 
-                user.send(f'<@{host_id}> pinged you!') # this specifically
-        await interaction.response.send_message(f'You pinged everyone')
-        #TODO: This shit aint working yet
-        print("ping")
+                await user.send(f'<@{host_id}> pinged you!')
+        await interaction.response.send_message(f'You pinged all participants')
+        print(f'{u.host} pinged all participants')
+
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
-        await interaction.response.send_message("event cancel")
-        print("cancel")
+        host_id = interaction.user.id
+        for u in self.user_lst:
+            if u.id != host_id:
+                user = bot.get_user(u.id)
+                await user.send(f'<@{host_id}> has canceled the event')
+        await interaction.response.send_message("Event canceled")
+        print(f'{host_id} canceled event')
+        #TODO: actual implementation of this, right now only messages participants that the event is canceled
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
