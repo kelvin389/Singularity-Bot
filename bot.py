@@ -7,10 +7,9 @@ import User
 def update_status(interaction: discord.Interaction, new_status: int, user_lst):
     user_id = interaction.user.id
     for u in user_lst:
-        if u.get_user == user_id:
+        if u.id == user_id:
             u.set_status(new_status)
-    # TODO: get the user object that matches user_id and update its status
-    # this shit not working yet
+            print(f'{u.id} set status to {u.status}')          
 
 class ReadyButtons(discord.ui.View): 
     def __init__(self, user_lst):
@@ -40,8 +39,8 @@ class ControlPanelButtons(discord.ui.View):
         host_id = interaction.user.id
         for u in self.user_lst:
             if u.id != host_id:
-                user = bot.get_user(u.id)
-                user.send(f'<@{host_id}> pinged you!')
+                user = bot.get_user(u.id) 
+                user.send(f'<@{host_id}> pinged you!') # this specifically
         await interaction.response.send_message(f'You pinged everyone')
         #TODO: This shit aint working yet
         print("ping")
