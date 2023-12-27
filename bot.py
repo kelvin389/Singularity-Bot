@@ -26,12 +26,17 @@ class ReadyButtons(discord.ui.View):
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
-    def __init__(self):
+    def __init__(self, user_lst):
+        self.user_lst = user_lst
         super().__init__()
 
     @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
-        await interaction.response.send_message("pinggg")
+        host_id = interaction.user.id
+        for u in self.user_lst:
+            user = bot.get_user(u.id)
+            user.send("Ping")
+        await interaction.response.send_message(f'<@{host_id}> pinged you!')
         # TODO: figure out where to get 'users' (list of all User objects)
         #for u in users:
             #u.discord_user.send("PING!!!")
@@ -87,7 +92,7 @@ async def make_request(interaction: discord.Interaction, event: str, time: str, 
         
         # send the host control panel buttons, other participants ready buttons
         if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons()
+            cp_buttons = ControlPanelButtons(user_lst)
             await user.send(embed=embed, view=cp_buttons)
         else:
             ready_buttons = ReadyButtons()
