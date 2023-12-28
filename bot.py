@@ -6,7 +6,7 @@ import User
 
 async def update_status(interaction: discord.Interaction, new_status: int):
     user_id = interaction.user.id
-    await interaction.edit_original_response(content="cocken balls")
+    await interaction.message.edit(embed=discord.Embed(title=f"new shit here new status:{new_status}"))
     # TODO: get the user object that matches user_id and update its status
 
 class ReadyButtons(discord.ui.View): 
@@ -15,15 +15,15 @@ class ReadyButtons(discord.ui.View):
 
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_ACCEPTED)
+        await update_status(interaction, User.STATUS_ACCEPTED)
         await interaction.response.send_message("Your status has been updated to ✅")
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_REJECTED)
+        await update_status(interaction, User.STATUS_REJECTED)
         await interaction.response.send_message("Your status has been updated to ❌")
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        update_status(interaction, User.STATUS_MAYBE)
+        await update_status(interaction, User.STATUS_MAYBE)
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
