@@ -4,6 +4,8 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 import User
+import datetime
+import re
 
 async def update_status(interaction: discord.Interaction, new_status: int):
     user_id = interaction.user.id
@@ -60,18 +62,70 @@ async def sync(interaction: discord.Interaction):
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
-#@app_commands.describe(event="What's happening?")
-#@app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
-#@app_commands.describe(time="format: 11:11")
-#@app_commands.describe(day="ajoawef")
-app_commands.choices(choices=[
-    app_commands.Choice(name="Rock", value="rock"),
-    app_commands.Choice(name="Paper", value="paper"),
-    app_commands.Choice(name="Scissors", value="scissors"),
-])
-async def make_request(interaction: discord.Interaction, event: str, participants: str, time: str, day: app_commands.Range[int, 1, 31]=0, month: int=0, year: int=0):
+@app_commands.describe(event="What's happening?")
+@app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
+@app_commands.describe(time="What time of day the event is happening. Can use 12 or 24 hour time. (eg. 8:34 pm OR 20:34)")
+@app_commands.describe(day="(Optional) Day of the month from 1-31. If left unspecified, the next possible time that your inputted time can occur is used. (eg. if its 11:59pm and you input 7:00pm, 7:00pm the next day will be assumed)")
+@app_commands.describe(month="(Optional. Must also input day)")
+@app_commands.describe(year="(Optional. Must also input day and month)")
+@app_commands.choices(month=[
+    app_commands.Choice(name="January", value=1),
+    app_commands.Choice(name="February", value=2),
+    app_commands.Choice(name="March", value=3),
+    app_commands.Choice(name="April", value=4),
+    app_commands.Choice(name="May", value=5),
+    app_commands.Choice(name="June", value=6),
+    app_commands.Choice(name="July", value=7),
+    app_commands.Choice(name="August", value=8),
+    app_commands.Choice(name="September", value=9),
+    app_commands.Choice(name="October", value=10),
+    app_commands.Choice(name="November", value=11),
+    app_commands.Choice(name="December", value=12)])
+async def make_request(interaction: discord.Interaction, event: str, participants: str, time: str, day: app_commands.Range[int, 1, 31]=None, month: int=None, year: int=None):
+    if month and not day:
+        await interaction.response.send_message("you set a month without day you donkey", ephemeral=True)
+        return
+    if year and (not day or not month):
+        await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
+        return
+
+    now = datetime.datetime.now()
+    embed_strftime = "%I:%M %p"
+
+    # TODO: dogshit code
+    if not day:
+        day = now.day
+    else:
+        # if a day is set, then also show a day and month in the embed
+        embed_strftime += ", %b. %d"
+    if not month:
+        month = now.month
+    if not year:
+        year = now.year
+    else:
+        # also show year in embed if its set
+        embed_strftime += ", %Y"
+    
+    # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
+    match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
+    hr, min = int(match.group(1)), int(match.group(2))
+    # account for 12 hr time format
+    # TODO: fix if 24 hr time is inputted and pm (eg. 15:00pm)
+    if match.group(3) and match.group(3).lower() == "pm":
+        hr += 12
+
+    # TODO: convert datetime obj by timezone
+    event_datetime = datetime.datetime(year, month, day, hr, min)
+
+    # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
+    # TODO: only works for rolling over a day. possibly also roll over month/syears
+    # TODO: worst way of doing this of all time
+    while (event_datetime < now):
+        event_datetime += datetime.timedelta(days=1)
+
+    event_timestamp = int(event_datetime.timestamp())
     embed = discord.Embed()
-    embed.title = f'{event} at {time}'
+    embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
     embed.colour = discord.Colour.blue()
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
     embed.set_footer(text="!note [message] to leave a note")
