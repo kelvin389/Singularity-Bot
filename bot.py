@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import os
 from dotenv import load_dotenv
 import User
@@ -59,10 +60,16 @@ async def sync(interaction: discord.Interaction):
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
-@discord.app_commands.describe(event="What's happening?")
-@discord.app_commands.describe(time="Does not need to follow any specific format; do whatever the participants will understand")
-@discord.app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
-async def make_request(interaction: discord.Interaction, event: str, time: str, participants: str):
+#@app_commands.describe(event="What's happening?")
+#@app_commands.describe(participants="Specify who you want to invite by mentioning them with @, similar to how you would ping them (eg. @kal @BenAstromo). Theres no need to include yourself.")
+#@app_commands.describe(time="format: 11:11")
+#@app_commands.describe(day="ajoawef")
+app_commands.choices(choices=[
+    app_commands.Choice(name="Rock", value="rock"),
+    app_commands.Choice(name="Paper", value="paper"),
+    app_commands.Choice(name="Scissors", value="scissors"),
+])
+async def make_request(interaction: discord.Interaction, event: str, participants: str, time: str, day: app_commands.Range[int, 1, 31]=0, month: int=0, year: int=0):
     embed = discord.Embed()
     embed.title = f'{event} at {time}'
     embed.colour = discord.Colour.blue()
