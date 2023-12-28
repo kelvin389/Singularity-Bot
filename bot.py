@@ -8,26 +8,32 @@ import Event
 import datetime
 import re
 
-async def update_status(interaction: discord.Interaction, new_status: int):
+async def update_status(interaction: discord.Interaction, new_status: int, user_lst: list[User.User]):
     user_id = interaction.user.id
-    await interaction.message.edit(embed=discord.Embed(title=f"new shit here new status:{new_status}"))
-    # TODO: get the user object that matches user_id and update its status
+    for u in user_lst:
+        if u.id == user_id:
+            u.set_status(new_status)
+
+    # edit everyones status message to be updated
+    for u in user_lst:
+        await u.status_message.edit(embed=discord.Embed(title=f"someone updated their status. new shit here. will contain real info when Event is implemented. new status:{new_status}"))
 
 class ReadyButtons(discord.ui.View): 
-    def __init__(self):
+    def __init__(self, user_lst: list[User.User]):
         super().__init__()
+        self.user_lst = user_lst
 
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_ACCEPTED)
+        await update_status(interaction, User.STATUS_ACCEPTED, self.user_lst)
         await interaction.response.send_message("Your status has been updated to ✅")
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_REJECTED)
+        await update_status(interaction, User.STATUS_REJECTED, self.user_lst)
         await interaction.response.send_message("Your status has been updated to ❌")
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_MAYBE)
+        await update_status(interaction, User.STATUS_MAYBE, self.user_lst)
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
@@ -146,7 +152,6 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         embed_str += f'{u.emoji}{u.id_str} {u.note}\n'
     embed.add_field(name="Participants", value=embed_str, inline=True)
 
-    ready_buttons = ReadyButtons()
     # send all users a copy of the message
     for u in user_lst:
         user = bot.get_user(u.id)
@@ -154,12 +159,14 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         # send the host control panel buttons, other participants ready buttons
         if u.status == User.STATUS_HOST:
             cp_buttons = ControlPanelButtons()
-            await user.send(embed=embed, view=cp_buttons)
+            msg = await user.send(embed=embed, view=cp_buttons)
+            u.status_message = msg
         else:
-            ready_buttons = ReadyButtons()
-            await user.send(embed=embed, view=ready_buttons)
+            ready_buttons = ReadyButtons(user_lst)
+            msg = await user.send(embed=embed, view=ready_buttons)
+            u.status_message = msg
 
-    await interaction.response.send_message("Event successfully set up. ", ephemeral=True)
+    await interaction.response.send_message("Event successfully set up.", ephemeral=True)
 
 
 # convert host and list of participants to a list of users.
