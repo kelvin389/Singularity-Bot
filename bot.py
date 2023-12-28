@@ -4,6 +4,7 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 import User
+import Event
 import datetime
 import re
 
