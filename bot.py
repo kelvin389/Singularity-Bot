@@ -19,6 +19,8 @@ async def update_status(interaction: discord.Interaction, new_status: int, user_
         await u.status_message.edit(embed=discord.Embed(title=f"someone updated their status. new shit here. will contain real info when Event is implemented. new status:{new_status}"))
 
 class ReadyButtons(discord.ui.View): 
+    user_lst: list[User.User]
+
     def __init__(self, user_lst: list[User.User]):
         super().__init__()
         self.user_lst = user_lst
@@ -37,20 +39,32 @@ class ReadyButtons(discord.ui.View):
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
-    def __init__(self):
-        super().__init__()
+    user_lst: list[User.User]
 
-    @discord.ui.button(label="ping everyone", row=1, style=discord.ButtonStyle.blurple)
+    def __init__(self, user_lst):
+        super().__init__()
+        self.user_lst = user_lst
+
+    @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
-        await interaction.response.send_message("pinggg")
-        # TODO: figure out where to get 'users' (list of all User objects)
-        #for u in users:
-            #u.discord_user.send("PING!!!")
-        print("ping")
-    @discord.ui.button(label="cancel event", row=1, style=discord.ButtonStyle.blurple)
+        host_id = interaction.user.id
+        for u in self.user_lst:
+            if u.id != host_id:
+                user = bot.get_user(u.id) 
+                await user.send(f'<@{host_id}> pinged you!')
+        await interaction.response.send_message(f'You pinged all participants')
+        print(f'{u.host} pinged all participants')
+
+    @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
-        await interaction.response.send_message("event cancel")
-        print("cancel")
+        host_id = interaction.user.id
+        for u in self.user_lst:
+            if u.id != host_id:
+                user = bot.get_user(u.id)
+                await user.send(f'<@{host_id}> has canceled the event')
+        await interaction.response.send_message("Event canceled")
+        print(f'{host_id} canceled event')
+        #TODO: actual implementation of this, right now only messages participants that the event is canceled
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -95,40 +109,9 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     if year and (not day or not month):
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
-
-    now = datetime.datetime.now()
-    embed_strftime = "%I:%M %p"
-
-    # TODO: dogshit code
-    if not day:
-        day = now.day
-    else:
-        # if a day is set, then also show a day and month in the embed
-        embed_strftime += ", %b. %d"
-    if not month:
-        month = now.month
-    if not year:
-        year = now.year
-    else:
-        # also show year in embed if its set
-        embed_strftime += ", %Y"
-    
-    # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
-    match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
-    hr, min = int(match.group(1)), int(match.group(2))
-    # account for 12 hr time format
-    # TODO: fix if 24 hr time is inputted and pm (eg. 15:00pm)
-    if match.group(3) and match.group(3).lower() == "pm":
-        hr += 12
-
-    # TODO: convert datetime obj by timezone
-    event_datetime = datetime.datetime(year, month, day, hr, min)
-
+    event_datetime = to_datetime(time, day, month, year)
     # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
-    # TODO: only works for rolling over a day. possibly also roll over month/syears
-    # TODO: worst way of doing this of all time
-    while (event_datetime < now):
-        event_datetime += datetime.timedelta(days=1)
+    enforce_future(event_datetime)
 
     event_timestamp = int(event_datetime.timestamp())
     embed = discord.Embed()
@@ -158,7 +141,7 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         
         # send the host control panel buttons, other participants ready buttons
         if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons()
+            cp_buttons = ControlPanelButtons(user_lst)
             msg = await user.send(embed=embed, view=cp_buttons)
             u.status_message = msg
         else:
@@ -182,6 +165,43 @@ def participants_to_users(host, participants_lst):
         user_lst.append(u)
     
     return user_lst
+
+def to_datetime(time: str, day: int, month: int, year: int):
+    embed_strftime = "%I:%M %p"
+
+    # TODO: dogshit code
+    if not day:
+        day = now.day
+    else:
+        # if a day is set, then also show a day and month in the embed
+        embed_strftime += ", %b. %d"
+    if not month:
+        month = now.month
+    if not year:
+        year = now.year
+    else:
+        # also show year in embed if its set
+        embed_strftime += ", %Y"
+    
+    # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
+    match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
+    hr, min = int(match.group(1)), int(match.group(2))
+    # account for 12 hr time format
+    # TODO: fix if 24 hr time is inputted and pm (eg. 15:00pm)
+    if match.group(3) and match.group(3).lower() == "pm":
+        hr += 12
+
+    # TODO: convert datetime obj by timezone
+    event_datetime = datetime.datetime(year, month, day, hr, min)
+    return event_datetime
+
+def enforce_future(event_datetime: datetime.datetime):
+    now = datetime.datetime.now()
+    # TODO: only works for rolling over a day. possibly also roll over month/syears
+    # TODO: worst way of doing this of all time
+    while (event_datetime < now):
+        event_datetime += datetime.timedelta(days=1)
+
 
 # load token from .env and run bot
 load_dotenv()
