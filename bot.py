@@ -110,8 +110,6 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
     event_datetime = to_datetime(time, day, month, year)
-    # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
-    enforce_future(event_datetime)
 
     event_timestamp = int(event_datetime.timestamp())
     embed = discord.Embed()
@@ -167,6 +165,7 @@ def participants_to_users(host, participants_lst):
     return user_lst
 
 def to_datetime(time: str, day: int, month: int, year: int):
+    now = datetime.datetime.now()
     embed_strftime = "%I:%M %p"
 
     # TODO: dogshit code
@@ -193,15 +192,14 @@ def to_datetime(time: str, day: int, month: int, year: int):
 
     # TODO: convert datetime obj by timezone
     event_datetime = datetime.datetime(year, month, day, hr, min)
-    return event_datetime
 
-def enforce_future(event_datetime: datetime.datetime):
-    now = datetime.datetime.now()
     # TODO: only works for rolling over a day. possibly also roll over month/syears
     # TODO: worst way of doing this of all time
+    # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
     while (event_datetime < now):
         event_datetime += datetime.timedelta(days=1)
 
+    return event_datetime
 
 # load token from .env and run bot
 load_dotenv()
