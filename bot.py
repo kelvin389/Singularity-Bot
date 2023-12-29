@@ -180,10 +180,10 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     
     # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
     match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
-    hr, min = int(match.group(1)), int(match.group(2))
-    # account for 12 hr time format
-    # TODO: fix if 24 hr time is inputted and pm (eg. 15:00pm)
-    if match.group(3) and match.group(3).lower() == "pm":
+    hr, min, period = int(match.group(1)), int(match.group(2)), match.group(3)
+    # account for 12 hr time format.
+    # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
+    if hr <= 12 and period and period.lower() == "pm":
         hr += 12
 
     # TODO: convert datetime obj by timezone
