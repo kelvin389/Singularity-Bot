@@ -110,15 +110,17 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     if year and (not day or not month):
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
-    event_datetime = to_datetime(time, day, month, year)
 
+    # format of the time that will be shown to users
     embed_strftime = "%I:%M %p"
-    if day:
+    if day: # show month and day if a day was inputted
         embed_strftime += ", %b. %d"
-    if year:
+    if year: # show year if year was inputted
         embed_strftime += ", %Y"
 
+    event_datetime = to_datetime(time, day, month, year)
     event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
+
     embed = discord.Embed()
     embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
     embed.colour = discord.Colour.blue()
@@ -129,8 +131,7 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     print("time: ", time)
     print("participants: ", participants)
 
-    # list of participants each in format "<@[id]>"
-    participants = participants.strip()
+    participants = participants.strip() # list of participants each in format "<@[id]>"
     participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
     user_lst = participants_to_users(interaction.user.id, participants_lst)
 
