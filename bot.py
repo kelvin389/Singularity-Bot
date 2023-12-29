@@ -7,6 +7,7 @@ import User
 import Event
 import datetime
 import re
+from dateutil import relativedelta
 
 async def update_status(interaction: discord.Interaction, new_status: int, user_lst: list[User.User]):
     user_id = interaction.user.id
@@ -111,7 +112,13 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         return
     event_datetime = to_datetime(time, day, month, year)
 
-    event_timestamp = int(event_datetime.timestamp())
+    embed_strftime = "%I:%M %p"
+    if day:
+        embed_strftime += ", %b. %d"
+    if year:
+        embed_strftime += ", %Y"
+
+    event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
     embed = discord.Embed()
     embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
     embed.colour = discord.Colour.blue()
@@ -164,23 +171,12 @@ def participants_to_users(host, participants_lst):
     
     return user_lst
 
-def to_datetime(time: str, day: int, month: int, year: int):
+def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     now = datetime.datetime.now()
-    embed_strftime = "%I:%M %p"
 
-    # TODO: dogshit code
-    if not day:
-        day = now.day
-    else:
-        # if a day is set, then also show a day and month in the embed
-        embed_strftime += ", %b. %d"
-    if not month:
-        month = now.month
-    if not year:
-        year = now.year
-    else:
-        # also show year in embed if its set
-        embed_strftime += ", %Y"
+    day = input_day if input_day else now.day
+    month = input_month if input_month else now.month
+    year = input_year if input_year else now.year
     
     # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
     match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
@@ -193,11 +189,13 @@ def to_datetime(time: str, day: int, month: int, year: int):
     # TODO: convert datetime obj by timezone
     event_datetime = datetime.datetime(year, month, day, hr, min)
 
-    # TODO: only works for rolling over a day. possibly also roll over month/syears
-    # TODO: worst way of doing this of all time
     # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
-    while (event_datetime < now):
-        event_datetime += datetime.timedelta(days=1)
+    if not input_day:
+        event_datetime += relativedelta.relativedelta(days=1)
+    elif input_day and not input_month:
+        event_datetime += relativedelta.relativedelta(months=1)
+    elif input_day and input_month and not input_year:
+        event_datetime += relativedelta.relativedelta(years=1)
 
     return event_datetime
 
