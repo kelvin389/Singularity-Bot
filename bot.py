@@ -1,13 +1,20 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
+# Standard Library Imports
 import os
+import re
+import datetime
+
+# External Library Imports
+from dateutil import relativedelta
 from dotenv import load_dotenv
+
+# Discord Imports
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+# Custom Module Imports
 import User
 import Event
-import datetime
-import re
-from dateutil import relativedelta
 
 async def update_status(interaction: discord.Interaction, new_status: int, user_lst: list[User.User]):
     user_id = interaction.user.id
