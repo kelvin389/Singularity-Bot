@@ -16,3 +16,11 @@ class Event:
         # TODO: this function is probably a bad way to do this.
         # maybe have a new var for if Users is updated and automatically all this function
         # whenever embed_str is retrieved if modified
+            
+    def set_users(self, users):
+        self._users = users
+
+    def get_users(self):
+        return self._users
+
+    users = property(get_users, set_users)
