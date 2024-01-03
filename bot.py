@@ -16,8 +16,10 @@ from discord.ext import commands
 import User
 import Event
 
-async def update_status(interaction: discord.Interaction, new_status: int, user_lst: list[User.User]):
+async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event.Event):
+    user_lst: list[User.User]
     user_id = interaction.user.id
+    user_lst = event_obj.users
     for u in user_lst:
         if u.id == user_id:
             u.set_status(new_status)
@@ -27,31 +29,30 @@ async def update_status(interaction: discord.Interaction, new_status: int, user_
         await u.status_message.edit(embed=discord.Embed(title=f"someone updated their status. new shit here. will contain real info when Event is implemented. new status:{new_status}"))
 
 class ReadyButtons(discord.ui.View): 
-    user_lst: list[User.User]
 
-    def __init__(self, user_lst: list[User.User]):
+    def __init__(self, event_obj: Event.Event):
         super().__init__()
-        self.user_lst = user_lst
+        self.event_obj = event_obj
 
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_ACCEPTED, self.user_lst)
+        await update_status(interaction, User.STATUS_ACCEPTED, self.event_obj)
         await interaction.response.send_message("Your status has been updated to ✅")
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_REJECTED, self.user_lst)
+        await update_status(interaction, User.STATUS_REJECTED, self.event_obj)
         await interaction.response.send_message("Your status has been updated to ❌")
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_MAYBE, self.user_lst)
+        await update_status(interaction, User.STATUS_MAYBE, self.event_obj)
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
     user_lst: list[User.User]
 
-    def __init__(self, user_lst):
+    def __init__(self, event_obj: Event.Event):
         super().__init__()
-        self.user_lst = user_lst
+        self.user_lst = event_obj.users 
 
     @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
@@ -140,25 +141,26 @@ async def make_request(interaction: discord.Interaction, event: str, participant
 
     participants = participants.strip() # list of participants each in format "<@[id]>"
     participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
-    user_lst = participants_to_users(interaction.user.id, participants_lst)
+    inital_user_lst = participants_to_users(interaction.user.id, participants_lst)
+    event_obj = Event.Event(inital_user_lst)
 
     # construct list of users with their respective emojis
     embed_str = ''
-    for u in user_lst:
+    for u in event_obj.users:
         embed_str += f'{u.emoji}{u.id_str} {u.note}\n'
     embed.add_field(name="Participants", value=embed_str, inline=True)
 
     # send all users a copy of the message
-    for u in user_lst:
+    for u in event_obj.users:
         user = bot.get_user(u.id)
         
         # send the host control panel buttons, other participants ready buttons
         if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons(user_lst)
+            cp_buttons = ControlPanelButtons(event_obj)
             msg = await user.send(embed=embed, view=cp_buttons)
             u.status_message = msg
         else:
-            ready_buttons = ReadyButtons(user_lst)
+            ready_buttons = ReadyButtons(event_obj)
             msg = await user.send(embed=embed, view=ready_buttons)
             u.status_message = msg
 
