@@ -84,7 +84,6 @@ class ControlPanelButtons(discord.ui.View):
                 await user.send(f'<@{host_id}> has cancelled the event')
         await interaction.response.send_message("Cancel successful")
         print(f'{host_id} canceled event')
-        #TODO: actual implementation of this, right now only messages participants that the event is canceled
 
 intents = discord.Intents.all() 
 bot = commands.Bot(command_prefix="!", intents=intents)
