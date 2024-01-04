@@ -78,10 +78,11 @@ class ControlPanelButtons(discord.ui.View):
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
         for u in self.user_lst:
+            await u.status_message.edit(embed=discord.Embed(title=f'Event Cancelled'))
             if u.id != host_id:
                 user = bot.get_user(u.id)
                 await user.send(f'<@{host_id}> has cancelled the event')
-        await interaction.response.send_message("Event canceled")
+        await interaction.response.send_message("Cancel successful")
         print(f'{host_id} canceled event')
         #TODO: actual implementation of this, right now only messages participants that the event is canceled
 
