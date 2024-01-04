@@ -5,11 +5,12 @@ class Event:
     embed_base: str
     embed_str: str
 
-    def __init__(self, event, users, datetime, timestamp):
+    def __init__(self, event, users, datetime, timestamp, embed):
         self._event = event
         self._users = users
         self._datetime = datetime
         self._timestamp = timestamp
+        self._embed = embed
 
     def update_embed_str(self):
         new_embed_str = ''
@@ -53,3 +54,11 @@ class Event:
         return self._timestamp
 
     timestamp = property(get_timestamp, set_timestamp)
+
+    def set_embed(self, embed):
+        self._embed = embed
+
+    def get_embed(self):
+        return self._embed
+
+    embed = property(get_embed, set_embed)
