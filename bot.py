@@ -78,7 +78,7 @@ class ControlPanelButtons(discord.ui.View):
         host_id = interaction.user.id
         
         for u in self.event_obj.users:
-            await u.status_message.edit(embed=cancelled_embed)
+            await u.status_message.edit(embed=cancelled_embed, view=None)
 
             if u.id != host_id:
                 user = u.discord_user
