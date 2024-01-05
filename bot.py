@@ -64,12 +64,13 @@ class ControlPanelButtons(discord.ui.View):
     @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
+
         for u in self.event_obj.users:
             if u.id != host_id:
                 user = u.discord_user
                 await user.send(f'<@{host_id}> pinged you!')
         await interaction.response.send_message(f'You pinged all participants')
-        print(f'{u.host} pinged all participants') # this is not working right now
+        print(f'{host_id} pinged all participants')
 
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
@@ -84,6 +85,34 @@ class ControlPanelButtons(discord.ui.View):
                 await user.send(f'<@{host_id}> has cancelled the event')
         await interaction.response.send_message("Cancel successful")
         print(f'{host_id} cancelled event')
+
+class ConfirmationButtons(discord.ui.View):
+    event_obj: Event.Event
+
+    def __init__(self, event_obj: Event.Event):
+        super().__init__()
+        self.event_obj = event_obj 
+
+    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
+    async def click_confirm(self, interaction: discord.Interaction, button: discord.ui.button):
+        # send all users a copy of the message
+        for u in self.event_obj.users:
+            user = u.discord_user
+            
+            # send the host control panel buttons, other participants ready buttons
+            if u.status == User.STATUS_HOST:
+                cp_buttons = ControlPanelButtons(self.event_obj)
+                msg = await user.send(embed=self.event_obj.embed, view=cp_buttons)
+                u.status_message = msg
+            else:
+                ready_buttons = ReadyButtons(self.event_obj)
+                msg = await user.send(embed=self.event_obj.embed, view=ready_buttons)
+                u.status_message = msg
+    
+        await interaction.response.edit_message(content="Event successfully set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
+    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
+    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
+        await interaction.response.edit_message(content="Event not set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
 
 intents = discord.Intents.all() 
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -129,7 +158,6 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
 
-
     event_datetime = to_datetime(time, day, month, year)
     event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
 
@@ -152,21 +180,8 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     inital_user_lst = participants_to_users(interaction.user.id, participants_lst)
     event_obj = Event.Event(event, inital_user_lst, embed)
 
-    # send all users a copy of the message
-    for u in event_obj.users:
-        user = u.discord_user
-        
-        # send the host control panel buttons, other participants ready buttons
-        if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons(event_obj)
-            msg = await user.send(embed=embed, view=cp_buttons)
-            u.status_message = msg
-        else:
-            ready_buttons = ReadyButtons(event_obj)
-            msg = await user.send(embed=embed, view=ready_buttons)
-            u.status_message = msg
-
-    await interaction.response.send_message("Event successfully set up.", ephemeral=True)
+    confirm_buttons = ConfirmationButtons(event_obj)
+    await interaction.response.send_message("You are about to set up the following event. Is everything correct?", view=confirm_buttons, embed=embed, ephemeral=True)
 
 # convert host and list of participants to a list of users.
 # host is int, participants list is list of strings: ["<@[id1]>", "<@[id2]>", ...]
