@@ -49,15 +49,15 @@ class ReadyButtons(discord.ui.View):
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_ACCEPTED, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to ✅")
+        await interaction.response.defer()
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_REJECTED, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to ❌")
+        await interaction.response.defer()
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_MAYBE, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to 🤔")
+        await interaction.response.defer()
 
 class ControlPanelButtons(discord.ui.View):
     event_obj: Event.Event
