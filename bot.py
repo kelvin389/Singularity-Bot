@@ -113,6 +113,30 @@ class ConfirmationButtons(discord.ui.View):
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
         await interaction.response.edit_message(content="Event not set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
+    
+class TimezoneButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+
+        link_button = discord.ui.Button(label='link to choose', style=discord.ButtonStyle.blurple, url="https://kevinnovak.github.io/Time-Zone-Picker/")
+        self.add_item(link_button)
+    
+    @discord.ui.button(label="input", style=discord.ButtonStyle.blurple)
+    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
+        tz_modal = TimezoneModal()
+        await interaction.response.send_modal(tz_modal)
+
+# TODO: for some reason the title doesnt work
+class TimezoneModal(discord.ui.Modal, title="ASDFASDFASDF DFQW FQW EF WQDFAS DF"):
+    tz = discord.ui.TextInput(label='Timezone', placeholder="eg. America/Vancouver")
+
+    def __init__(self):
+        super().__init__()
+        self.title = ""
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        #TODO: save the timezone to json or database or whatever       
+        await interaction.response.send_message(f"you entered {self.tz}", ephemeral=True)
 
 intents = discord.Intents.all() 
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -128,6 +152,11 @@ async def sync(interaction: discord.Interaction):
     except Exception as e:
         print("error syncing", e)
         exit(1)
+
+@bot.tree.command(name="timezone", description="choose your timezone")
+async def choose_timezone(interaction: discord.Interaction):
+    tz_buttons = TimezoneButtons()
+    await interaction.response.send_message(content="epic infographic here", view=tz_buttons, ephemeral=True)
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
