@@ -129,18 +129,20 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
 
-    # format of the time that will be shown to users
-    embed_strftime = "%I:%M %p"
-    if day: # show month and day if a day was inputted
-        embed_strftime += ", %b. %d"
-    if year: # show year if year was inputted
-        embed_strftime += ", %Y"
 
     event_datetime = to_datetime(time, day, month, year)
     event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
 
+    absolute_time = ""
+    if day:
+        absolute_time = f"<t:{event_timestamp}:f>"
+    else:
+        absolute_time = f"<t:{event_timestamp}:t>"
+
+    relative_time = f"<t:{event_timestamp}:R>"
+
     embed = discord.Embed()
-    embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
+    embed.title = f'{event} at {absolute_time} ({relative_time})'
     embed.colour = discord.Colour.blue()
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
     embed.set_footer(text="!note [message] to leave a note (doesnt work lol)")
