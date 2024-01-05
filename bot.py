@@ -174,8 +174,10 @@ def participants_to_users(host_id, participants_lst):
     disc_usr = bot.get_user(host_id)
     host_u = User.User(host_id, disc_usr, User.STATUS_HOST)
     user_lst.append(host_u)
-    # turn participants list into User object list
+    # turn participants into User objects and append them to user list
     for p_str in participants_lst:
+        # NOTE: this results in the id being extracted from the string only to be added back inside of the User constructor.
+        # bad efficiency but done for the sake for readability
         match = re.search(r"<@(\d+)>", p_str)
         id = int(match.group(1))
         disc_usr = bot.get_user(id)
