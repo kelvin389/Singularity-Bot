@@ -216,7 +216,7 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     match = re.match(r"^(\d{1,2})(?::(\d{2}))?\s?([apAP][mM])?$", time)
     hr = int(match.group(1))
     min = int(match.group(2)) if match.group(2) else 0
-    period = match.group(3).lower()
+    period = match.group(3).lower() if match.group(3) else None
     # convert 12 hour to 24 hour time
     # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
     if (hr < 12 and period == "pm") or (hr == 12 and period == "am"):
