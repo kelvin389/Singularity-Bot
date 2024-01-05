@@ -15,6 +15,7 @@ EMOJI_MAYBE = "🤔"
 
 class User:
     #discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
+    status_message: discord.Message # the instance of the message containing the status embed sent to this user
     id_str: str
     id: int
     _status: int
@@ -25,6 +26,7 @@ class User:
     # id_input is a string of format <@[id]> when host=False
     def __init__(self, id_input, host=False):
         self.note = ""
+        self.status_message = None
 
         if host:
             self.id = id_input
