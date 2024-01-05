@@ -140,7 +140,7 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
     embed.colour = discord.Colour.blue()
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
-    embed.set_footer(text="!note [message] to leave a note")
+    embed.set_footer(text="!note [message] to leave a note (doesnt work lol)")
 
     participants = participants.strip() # list of participants each in format "<@[id]>"
     participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
@@ -184,13 +184,17 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     month = input_month if input_month else now.month
     year = input_year if input_year else now.year
     
-    # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
-    match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
-    hr, min, period = int(match.group(1)), int(match.group(2)), match.group(3)
+    # regex magic to extract the 1 (+2 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
+    # if minutes is missing, 0 is assumed. if period is missing, 24 hour format is assumed
+    match = re.match(r"^(\d{1,2})(?::(\d{2}))?\s?([apAP][mM])?$", time)
+    hr = int(match.group(1))
+    min = int(match.group(2)) if match.group(2) else 0
+    period = match.group(3).lower()
     # account for 12 hr time format.
     # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
-    if hr <= 12 and period and period.lower() == "pm":
+    if (hr < 12 and period == "pm") or (hr == 12 and period == "am"):
         hr += 12
+        hr %= 12 # wrap 24:XX to 0:XX
 
     # TODO: convert datetime obj by timezone
     event_datetime = datetime.datetime(year, month, day, hr, min)
