@@ -16,29 +16,31 @@ from discord.ext import commands
 import User
 import Event
 
+# Update all user's status messages when someone changes their status
 async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event.Event):
-
-    # Update all user's statuses
-    user_lst: list[User.User]
-    user_id = interaction.user.id
+    user_id = interaction.user.id # id of the user who wants to change their status
     user_lst = event_obj.users
+
+    # update users status
     for u in user_lst:
         if u.id == user_id:
             u.set_status(new_status)
+            break
 
-    # Modify the embed with new statuses 
-    embed = participant_embed_reconstructor(event_obj)
+    # Modify the embed with new status
+    event_obj.update_embed_statuses()
 
     # Edit everyones event message with new embed
     for u in event_obj.users:
         if u.status == User.STATUS_HOST:
             cp_buttons = ControlPanelButtons(event_obj)
-            await u.status_message.edit(embed=embed, view=cp_buttons)
+            await u.status_message.edit(embed=event_obj.embed, view=cp_buttons)
         else:
             ready_buttons = ReadyButtons(event_obj)
-            await u.status_message.edit(embed=embed, view=ready_buttons)
+            await u.status_message.edit(embed=event_obj.embed, view=ready_buttons)
 
 class ReadyButtons(discord.ui.View): 
+    event_obj: Event.Event
 
     def __init__(self, event_obj: Event.Event):
         super().__init__()
@@ -58,16 +60,16 @@ class ReadyButtons(discord.ui.View):
         await interaction.response.send_message("Your status has been updated to 🤔")
 
 class ControlPanelButtons(discord.ui.View):
-    user_lst: list[User.User]
+    event_obj: Event.Event
 
     def __init__(self, event_obj: Event.Event):
         super().__init__()
-        self.user_lst = event_obj.users 
+        self.event_obj = event_obj 
 
     @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
-        for u in self.user_lst:
+        for u in self.event_obj.users:
             if u.id != host_id:
                 user = bot.get_user(u.id) 
                 await user.send(f'<@{host_id}> pinged you!')
@@ -77,7 +79,7 @@ class ControlPanelButtons(discord.ui.View):
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
-        for u in self.user_lst:
+        for u in self.event_obj.users:
             await u.status_message.edit(embed=discord.Embed(title=f'Event Cancelled'))
             if u.id != host_id:
                 user = bot.get_user(u.id)
@@ -145,20 +147,10 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
     embed.set_footer(text="!note [message] to leave a note")
 
-    print("event: ", event)
-    print("time: ", time)
-    print("participants: ", participants)
-
     participants = participants.strip() # list of participants each in format "<@[id]>"
     participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
     inital_user_lst = participants_to_users(interaction.user.id, participants_lst)
-    event_obj = Event.Event(event, inital_user_lst, event_datetime, event_timestamp, embed)
-
-    # construct list of users with their respective emojis
-    embed_str = ''
-    for u in event_obj.users:
-        embed_str += f'{u.emoji}{u.id_str} {u.note}\n'
-    embed.add_field(name="Participants", value=embed_str, inline=True)
+    event_obj = Event.Event(event, inital_user_lst, embed)
 
     # send all users a copy of the message
     for u in event_obj.users:
@@ -175,20 +167,6 @@ async def make_request(interaction: discord.Interaction, event: str, participant
             u.status_message = msg
 
     await interaction.response.send_message("Event successfully set up.", ephemeral=True)
-
-# Takes an embed from an event and remakes the participant list with the updated statuses
-def participant_embed_reconstructor(event_obj: Event.Event):
-    participant_list_embed_field = 0
-
-    embed = event_obj.embed
-    embed.remove_field(participant_list_embed_field) 
-    embed_str = ''
-
-    for u in event_obj.users:
-        embed_str += f'{u.emoji}{u.id_str} {u.note}\n'
-    embed.add_field(name="Participants", value=embed_str, inline=True)
-    
-    return embed
 
 # convert host and list of participants to a list of users.
 # host is int, participants list is list of strings: ["<@[id1]>", "<@[id2]>", ...]
