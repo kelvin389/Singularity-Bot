@@ -66,7 +66,7 @@ class ControlPanelButtons(discord.ui.View):
         host_id = interaction.user.id
         for u in self.event_obj.users:
             if u.id != host_id:
-                user = bot.get_user(u.id) 
+                user = u.discord_user
                 await user.send(f'<@{host_id}> pinged you!')
         await interaction.response.send_message(f'You pinged all participants')
         print(f'{u.host} pinged all participants') # this is not working right now
@@ -80,7 +80,7 @@ class ControlPanelButtons(discord.ui.View):
             await u.status_message.edit(embed=cancelled_embed)
 
             if u.id != host_id:
-                user = bot.get_user(u.id)
+                user = u.discord_user
                 await user.send(f'<@{host_id}> has cancelled the event')
         await interaction.response.send_message("Cancel successful")
         print(f'{host_id} cancelled event')
@@ -152,7 +152,7 @@ async def make_request(interaction: discord.Interaction, event: str, participant
 
     # send all users a copy of the message
     for u in event_obj.users:
-        user = bot.get_user(u.id)
+        user = u.discord_user
         
         # send the host control panel buttons, other participants ready buttons
         if u.status == User.STATUS_HOST:
@@ -168,14 +168,16 @@ async def make_request(interaction: discord.Interaction, event: str, participant
 
 # convert host and list of participants to a list of users.
 # host is int, participants list is list of strings: ["<@[id1]>", "<@[id2]>", ...]
-def participants_to_users(host, participants_lst): 
+def participants_to_users(host_id, participants_lst): 
     user_lst = []   
 
-    host_u = User.User(host, True)
+    disc_usr = bot.get_user(host_id)
+    host_u = User.User(host_id, disc_usr, True)
     user_lst.append(host_u)
     # turn participants list into User object list
     for p_str in participants_lst:
-        u = User.User(p_str)
+        disc_usr = bot.get_user(int(p_str))
+        u = User.User(p_str, disc_usr)
         user_lst.append(u)
     
     return user_lst

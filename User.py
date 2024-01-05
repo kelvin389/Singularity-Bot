@@ -14,7 +14,7 @@ EMOJI_REJECTED = "❌"
 EMOJI_MAYBE = "🤔"
 
 class User:
-    #discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
+    discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
     status_message: discord.Message # the instance of the message containing the status embed sent to this user
     id_str: str
     id: int
@@ -24,9 +24,10 @@ class User:
 
     # id_input is an integer containing only the user id when host=True
     # id_input is a string of format <@[id]> when host=False
-    def __init__(self, id_input, host=False):
+    def __init__(self, id_input, discord_user, host=False):
         self.note = ""
         self.status_message = None
+        self.discord_user = discord_user
 
         if host:
             self.id = id_input
