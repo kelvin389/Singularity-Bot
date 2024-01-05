@@ -217,22 +217,24 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     hr = int(match.group(1))
     min = int(match.group(2)) if match.group(2) else 0
     period = match.group(3).lower()
-    # account for 12 hr time format.
+    # convert 12 hour to 24 hour time
     # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
     if (hr < 12 and period == "pm") or (hr == 12 and period == "am"):
         hr += 12
-        hr %= 12 # wrap 24:XX to 0:XX
+        hr %= 24 # wrap 24:XX to 0:XX
 
     # TODO: convert datetime obj by timezone
     event_datetime = datetime.datetime(year, month, day, hr, min)
 
+    print(event_datetime)
     # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
-    if not input_day:
-        event_datetime += relativedelta.relativedelta(days=1)
-    elif input_day and not input_month:
-        event_datetime += relativedelta.relativedelta(months=1)
-    elif input_day and input_month and not input_year:
-        event_datetime += relativedelta.relativedelta(years=1)
+    if event_datetime < now:
+        if not input_day:
+            event_datetime += relativedelta.relativedelta(days=1)
+        elif input_day and not input_month:
+            event_datetime += relativedelta.relativedelta(months=1)
+        elif input_day and input_month and not input_year:
+            event_datetime += relativedelta.relativedelta(years=1)
 
     return event_datetime
 
