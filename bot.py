@@ -32,12 +32,7 @@ async def update_status(interaction: discord.Interaction, new_status: int, event
 
     # Edit everyones event message with new embed
     for u in event_obj.users:
-        if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons(event_obj)
-            await u.status_message.edit(embed=event_obj.embed, view=cp_buttons)
-        else:
-            ready_buttons = ReadyButtons(event_obj)
-            await u.status_message.edit(embed=event_obj.embed, view=ready_buttons)
+        await u.status_message.edit(embed=event_obj.embed)
 
 class ReadyButtons(discord.ui.View): 
     event_obj: Event.Event
