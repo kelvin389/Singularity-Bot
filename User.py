@@ -14,7 +14,7 @@ EMOJI_REJECTED = "❌"
 EMOJI_MAYBE = "🤔"
 
 class User:
-    #discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
+    discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
     status_message: discord.Message # the instance of the message containing the status embed sent to this user
     id_str: str
     id: int
@@ -22,22 +22,13 @@ class User:
     emoji: str
     note: str
 
-    # id_input is an integer containing only the user id when host=True
-    # id_input is a string of format <@[id]> when host=False
-    def __init__(self, id_input, host=False):
+    def __init__(self, id, discord_user, init_status):
         self.note = ""
         self.status_message = None
-
-        if host:
-            self.id = id_input
-            self.id_str = "<@" + str(id_input) + ">"
-            self.status = STATUS_HOST
-        else:
-            # extract id from string
-            match = re.search(r"<@(\d+)>", id_input)
-            self.id = int(match.group(1))
-            self.id_str = id_input
-            self.status = STATUS_UNDECIDED
+        self.discord_user = discord_user
+        self.id = id
+        self.id_str = "<@" + str(id) + ">"
+        self.status = init_status
 
     def set_status(self, status):
         self._status = status

@@ -32,12 +32,7 @@ async def update_status(interaction: discord.Interaction, new_status: int, event
 
     # Edit everyones event message with new embed
     for u in event_obj.users:
-        if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons(event_obj)
-            await u.status_message.edit(embed=event_obj.embed, view=cp_buttons)
-        else:
-            ready_buttons = ReadyButtons(event_obj)
-            await u.status_message.edit(embed=event_obj.embed, view=ready_buttons)
+        await u.status_message.edit(embed=event_obj.embed)
 
 class ReadyButtons(discord.ui.View): 
     event_obj: Event.Event
@@ -49,15 +44,15 @@ class ReadyButtons(discord.ui.View):
     @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
     async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_ACCEPTED, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to ✅")
+        await interaction.response.defer()
     @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
     async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_REJECTED, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to ❌")
+        await interaction.response.defer()
     @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
     async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
         await update_status(interaction, User.STATUS_MAYBE, self.event_obj)
-        await interaction.response.send_message("Your status has been updated to 🤔")
+        await interaction.response.defer()
 
 class ControlPanelButtons(discord.ui.View):
     event_obj: Event.Event
@@ -69,23 +64,55 @@ class ControlPanelButtons(discord.ui.View):
     @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
     async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
         host_id = interaction.user.id
+
         for u in self.event_obj.users:
             if u.id != host_id:
-                user = bot.get_user(u.id) 
+                user = u.discord_user
                 await user.send(f'<@{host_id}> pinged you!')
         await interaction.response.send_message(f'You pinged all participants')
-        print(f'{u.host} pinged all participants') # this is not working right now
+        print(f'{host_id} pinged all participants')
 
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
+        cancelled_embed = discord.Embed(title="Event Cancelled")
         host_id = interaction.user.id
+        
         for u in self.event_obj.users:
-            await u.status_message.edit(embed=discord.Embed(title=f'Event Cancelled'))
+            await u.status_message.edit(embed=cancelled_embed, view=None)
+
             if u.id != host_id:
-                user = bot.get_user(u.id)
+                user = u.discord_user
                 await user.send(f'<@{host_id}> has cancelled the event')
         await interaction.response.send_message("Cancel successful")
-        print(f'{host_id} canceled event')
+        print(f'{host_id} cancelled event')
+
+class ConfirmationButtons(discord.ui.View):
+    event_obj: Event.Event
+
+    def __init__(self, event_obj: Event.Event):
+        super().__init__()
+        self.event_obj = event_obj 
+
+    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
+    async def click_confirm(self, interaction: discord.Interaction, button: discord.ui.button):
+        # send all users a copy of the message
+        for u in self.event_obj.users:
+            user = u.discord_user
+            
+            # send the host control panel buttons, other participants ready buttons
+            if u.status == User.STATUS_HOST:
+                cp_buttons = ControlPanelButtons(self.event_obj)
+                msg = await user.send(embed=self.event_obj.embed, view=cp_buttons)
+                u.status_message = msg
+            else:
+                ready_buttons = ReadyButtons(self.event_obj)
+                msg = await user.send(embed=self.event_obj.embed, view=ready_buttons)
+                u.status_message = msg
+    
+        await interaction.response.edit_message(content="Event successfully set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
+    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
+    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
+        await interaction.response.edit_message(content="Event not set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
 
 intents = discord.Intents.all() 
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -131,53 +158,48 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
 
-    # format of the time that will be shown to users
-    embed_strftime = "%I:%M %p"
-    if day: # show month and day if a day was inputted
-        embed_strftime += ", %b. %d"
-    if year: # show year if year was inputted
-        embed_strftime += ", %Y"
-
     event_datetime = to_datetime(time, day, month, year)
     event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
 
+    absolute_time = ""
+    if day:
+        absolute_time = f"<t:{event_timestamp}:f>"
+    else:
+        absolute_time = f"<t:{event_timestamp}:t>"
+
+    relative_time = f"<t:{event_timestamp}:R>"
+
     embed = discord.Embed()
-    embed.title = f'{event} at {event_datetime.strftime(embed_strftime)} (<t:{event_timestamp}:R>)'
+    embed.title = f'{event} at {absolute_time} ({relative_time})'
     embed.colour = discord.Colour.blue()
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
-    embed.set_footer(text="!note [message] to leave a note")
+    embed.set_footer(text="!note [message] to leave a note (doesnt work lol)")
 
     participants = participants.strip() # list of participants each in format "<@[id]>"
     participants_lst = participants.split() # split with no args splits on all whitespace (multiple spaces, newlines, etc)
     inital_user_lst = participants_to_users(interaction.user.id, participants_lst)
     event_obj = Event.Event(event, inital_user_lst, embed)
 
-    # send all users a copy of the message
-    for u in event_obj.users:
-        user = bot.get_user(u.id)
-        
-        # send the host control panel buttons, other participants ready buttons
-        if u.status == User.STATUS_HOST:
-            cp_buttons = ControlPanelButtons(event_obj)
-            msg = await user.send(embed=embed, view=cp_buttons)
-            u.status_message = msg
-        else:
-            ready_buttons = ReadyButtons(event_obj)
-            msg = await user.send(embed=embed, view=ready_buttons)
-            u.status_message = msg
-
-    await interaction.response.send_message("Event successfully set up.", ephemeral=True)
+    confirm_buttons = ConfirmationButtons(event_obj)
+    await interaction.response.send_message("You are about to set up the following event. Is everything correct?", view=confirm_buttons, embed=embed, ephemeral=True)
 
 # convert host and list of participants to a list of users.
 # host is int, participants list is list of strings: ["<@[id1]>", "<@[id2]>", ...]
-def participants_to_users(host, participants_lst): 
+def participants_to_users(host_id, participants_lst): 
     user_lst = []   
 
-    host_u = User.User(host, True)
+    disc_usr = bot.get_user(host_id)
+    host_u = User.User(host_id, disc_usr, User.STATUS_HOST)
     user_lst.append(host_u)
-    # turn participants list into User object list
+    # turn participants into User objects and append them to user list
     for p_str in participants_lst:
-        u = User.User(p_str)
+        # NOTE: this results in the id being extracted from the string only to be added back inside of the User constructor.
+        # bad efficiency but done for the sake for readability
+        match = re.search(r"<@(\d+)>", p_str)
+        id = int(match.group(1))
+        disc_usr = bot.get_user(id)
+
+        u = User.User(id, disc_usr, User.STATUS_UNDECIDED)
         user_lst.append(u)
     
     return user_lst
@@ -189,24 +211,30 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
     month = input_month if input_month else now.month
     year = input_year if input_year else now.year
     
-    # regex magic to extract the 2 (+1 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
-    match = re.match(r"^(\d{1,2}):(\d{2})\s?([apAP][mM])?$", time)
-    hr, min, period = int(match.group(1)), int(match.group(2)), match.group(3)
-    # account for 12 hr time format.
+    # regex magic to extract the 1 (+2 optional) components from time string (11:59pm -> pulls out 11, 59, pm)
+    # if minutes is missing, 0 is assumed. if period is missing, 24 hour format is assumed
+    match = re.match(r"^(\d{1,2})(?::(\d{2}))?\s?([apAP][mM])?$", time)
+    hr = int(match.group(1))
+    min = int(match.group(2)) if match.group(2) else 0
+    period = match.group(3).lower() if match.group(3) else None
+    # convert 12 hour to 24 hour time
     # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
-    if hr <= 12 and period and period.lower() == "pm":
+    if (hr < 12 and period == "pm") or (hr == 12 and period == "am"):
         hr += 12
+        hr %= 24 # wrap 24:XX to 0:XX
 
     # TODO: convert datetime obj by timezone
     event_datetime = datetime.datetime(year, month, day, hr, min)
 
+    print(event_datetime)
     # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
-    if not input_day:
-        event_datetime += relativedelta.relativedelta(days=1)
-    elif input_day and not input_month:
-        event_datetime += relativedelta.relativedelta(months=1)
-    elif input_day and input_month and not input_year:
-        event_datetime += relativedelta.relativedelta(years=1)
+    if event_datetime < now:
+        if not input_day:
+            event_datetime += relativedelta.relativedelta(days=1)
+        elif input_day and not input_month:
+            event_datetime += relativedelta.relativedelta(months=1)
+        elif input_day and input_month and not input_year:
+            event_datetime += relativedelta.relativedelta(years=1)
 
     return event_datetime
 
