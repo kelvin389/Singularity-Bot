@@ -172,12 +172,15 @@ def participants_to_users(host_id, participants_lst):
     user_lst = []   
 
     disc_usr = bot.get_user(host_id)
-    host_u = User.User(host_id, disc_usr, True)
+    host_u = User.User(host_id, disc_usr, User.STATUS_HOST)
     user_lst.append(host_u)
     # turn participants list into User object list
     for p_str in participants_lst:
-        disc_usr = bot.get_user(int(p_str))
-        u = User.User(p_str, disc_usr)
+        match = re.search(r"<@(\d+)>", p_str)
+        id = int(match.group(1))
+        disc_usr = bot.get_user(id)
+
+        u = User.User(id, disc_usr, User.STATUS_UNDECIDED)
         user_lst.append(u)
     
     return user_lst

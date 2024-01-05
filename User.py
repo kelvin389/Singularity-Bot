@@ -22,23 +22,13 @@ class User:
     emoji: str
     note: str
 
-    # id_input is an integer containing only the user id when host=True
-    # id_input is a string of format <@[id]> when host=False
-    def __init__(self, id_input, discord_user, host=False):
+    def __init__(self, id, discord_user, init_status):
         self.note = ""
         self.status_message = None
         self.discord_user = discord_user
-
-        if host:
-            self.id = id_input
-            self.id_str = "<@" + str(id_input) + ">"
-            self.status = STATUS_HOST
-        else:
-            # extract id from string
-            match = re.search(r"<@(\d+)>", id_input)
-            self.id = int(match.group(1))
-            self.id_str = id_input
-            self.status = STATUS_UNDECIDED
+        self.id = id
+        self.id_str = "<@" + str(id) + ">"
+        self.status = init_status
 
     def set_status(self, status):
         self._status = status
