@@ -2,6 +2,8 @@
 import os
 import re
 import datetime
+import json
+import zoneinfo
 
 # External Library Imports
 from dateutil import relativedelta
@@ -137,6 +139,25 @@ class TimezoneModal(discord.ui.Modal, title="ASDFASDFASDF DFQW FQW EF WQDFAS DF"
     async def on_submit(self, interaction: discord.Interaction):
         #TODO: save the timezone to json or database or whatever       
         await interaction.response.send_message(f"you entered {self.tz}", ephemeral=True)
+        user_timezones[str(interaction.user.id)] = self.tz.value
+        with open(TIMEZONE_JSON_DIR, "w") as f:
+            json.dump(user_timezones, f)
+
+
+TIMEZONE_JSON_DIR = "user_timezones.json"
+LOCAL_TZINFO = zoneinfo.ZoneInfo("America/Vancouver")
+
+# dict {id: str(int): timezone: str}
+# id must be a string because in JSON, all keys are strings
+user_timezones = {}
+
+with open(TIMEZONE_JSON_DIR, "r") as f:
+    try:
+        user_timezones = json.load(f)
+        print(user_timezones)
+    except:
+        # if file doesnt exist or is empty
+        None
 
 intents = discord.Intents.all() 
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -187,7 +208,8 @@ async def make_request(interaction: discord.Interaction, event: str, participant
         await interaction.response.send_message("you set a year without month or day you donkey", ephemeral=True)
         return
 
-    event_datetime = to_datetime(time, day, month, year)
+    host_tz = zoneinfo.ZoneInfo(user_timezones[str(interaction.user.id)])
+    event_datetime = to_datetime(time, day, month, year, host_tz)
     event_timestamp = int(event_datetime.timestamp()) # event time in unix timestamp format
 
     absolute_time = ""
@@ -233,8 +255,8 @@ def participants_to_users(host_id, participants_lst):
     
     return user_lst
 
-def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
-    now = datetime.datetime.now()
+def to_datetime(time: str, input_day: int, input_month: int, input_year: int, timezone: zoneinfo.ZoneInfo):
+    now = datetime.datetime.now(LOCAL_TZINFO)
 
     day = input_day if input_day else now.day
     month = input_month if input_month else now.month
@@ -252,8 +274,7 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int):
         hr += 12
         hr %= 24 # wrap 24:XX to 0:XX
 
-    # TODO: convert datetime obj by timezone
-    event_datetime = datetime.datetime(year, month, day, hr, min)
+    event_datetime = datetime.datetime(year, month, day, hr, min, tzinfo=timezone)
 
     print(event_datetime)
     # enforce a future time (ie. if they choose 3:00pm and its 11:59pm, then set day as tomorrow rather than taking today)
