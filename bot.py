@@ -17,132 +17,8 @@ from discord.ext import commands
 # Custom Module Imports
 import User
 import Event
-
-# Update all user's status messages when someone changes their status
-async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event.Event):
-    user_id = interaction.user.id # id of the user who wants to change their status
-    user_lst = event_obj.users
-
-    # update users status
-    for u in user_lst:
-        if u.id == user_id:
-            u.set_status(new_status)
-            break
-
-    # Modify the embed with new status
-    event_obj.update_embed_statuses()
-
-    # Edit everyones event message with new embed
-    for u in event_obj.users:
-        await u.status_message.edit(embed=event_obj.embed)
-
-class ReadyButtons(discord.ui.View): 
-    event_obj: Event.Event
-
-    def __init__(self, event_obj: Event.Event):
-        super().__init__()
-        self.event_obj = event_obj
-
-    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
-    async def click_accept(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_ACCEPTED, self.event_obj)
-        await interaction.response.defer()
-    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
-    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_REJECTED, self.event_obj)
-        await interaction.response.defer()
-    @discord.ui.button(label="🤔", style=discord.ButtonStyle.blurple)
-    async def click_maybe(self, interaction: discord.Interaction, button: discord.ui.button):
-        await update_status(interaction, User.STATUS_MAYBE, self.event_obj)
-        await interaction.response.defer()
-
-class ControlPanelButtons(discord.ui.View):
-    event_obj: Event.Event
-
-    def __init__(self, event_obj: Event.Event):
-        super().__init__()
-        self.event_obj = event_obj 
-
-    @discord.ui.button(label="Ping Participants", row=1, style=discord.ButtonStyle.blurple)
-    async def click_ping(self, interaction: discord.Interaction, button: discord.ui.button):
-        host_id = interaction.user.id
-
-        for u in self.event_obj.users:
-            if u.id != host_id:
-                user = u.discord_user
-                await user.send(f'<@{host_id}> pinged you!')
-        await interaction.response.send_message(f'You pinged all participants')
-        print(f'{host_id} pinged all participants')
-
-    @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
-    async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
-        cancelled_embed = discord.Embed(title="Event Cancelled")
-        host_id = interaction.user.id
-        
-        for u in self.event_obj.users:
-            await u.status_message.edit(embed=cancelled_embed, view=None)
-
-            if u.id != host_id:
-                user = u.discord_user
-                await user.send(f'<@{host_id}> has cancelled the event')
-        await interaction.response.send_message("Cancel successful")
-        print(f'{host_id} cancelled event')
-
-class ConfirmationButtons(discord.ui.View):
-    event_obj: Event.Event
-
-    def __init__(self, event_obj: Event.Event):
-        super().__init__()
-        self.event_obj = event_obj 
-
-    @discord.ui.button(label="✅", style=discord.ButtonStyle.blurple)
-    async def click_confirm(self, interaction: discord.Interaction, button: discord.ui.button):
-        # send all users a copy of the message
-        for u in self.event_obj.users:
-            user = u.discord_user
-            
-            # send the host control panel buttons, other participants ready buttons
-            if u.status == User.STATUS_HOST:
-                cp_buttons = ControlPanelButtons(self.event_obj)
-                msg = await user.send(embed=self.event_obj.embed, view=cp_buttons)
-                u.status_message = msg
-            else:
-                ready_buttons = ReadyButtons(self.event_obj)
-                msg = await user.send(embed=self.event_obj.embed, view=ready_buttons)
-                u.status_message = msg
-    
-        await interaction.response.edit_message(content="Event successfully set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
-    @discord.ui.button(label="❌", style=discord.ButtonStyle.blurple)
-    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        await interaction.response.edit_message(content="Event not set up. This message will be deleted in 5 seconds", embed=None, view=None, delete_after=5.0)
-    
-class TimezoneButtons(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-
-        link_button = discord.ui.Button(label='link to choose', style=discord.ButtonStyle.blurple, url="https://kevinnovak.github.io/Time-Zone-Picker/")
-        self.add_item(link_button)
-    
-    @discord.ui.button(label="input", style=discord.ButtonStyle.blurple)
-    async def click_reject(self, interaction: discord.Interaction, button: discord.ui.button):
-        tz_modal = TimezoneModal()
-        await interaction.response.send_modal(tz_modal)
-
-# TODO: for some reason the title doesnt work
-class TimezoneModal(discord.ui.Modal, title="ASDFASDFASDF DFQW FQW EF WQDFAS DF"):
-    tz = discord.ui.TextInput(label='Timezone', placeholder="eg. America/Vancouver")
-
-    def __init__(self):
-        super().__init__()
-        self.title = ""
-    
-    async def on_submit(self, interaction: discord.Interaction):
-        #TODO: save the timezone to json or database or whatever       
-        await interaction.response.send_message(f"you entered {self.tz}", ephemeral=True)
-        user_timezones[str(interaction.user.id)] = self.tz.value
-        with open(TIMEZONE_JSON_DIR, "w") as f:
-            json.dump(user_timezones, f)
-
+from views.confirmation_buttons import ConfirmationButtons
+from views.timezone_buttons import TimezoneButtons
 
 TIMEZONE_JSON_DIR = "user_timezones.json"
 LOCAL_TZINFO = zoneinfo.ZoneInfo("America/Vancouver")
@@ -287,6 +163,13 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int, ti
             event_datetime += relativedelta.relativedelta(years=1)
 
     return event_datetime
+
+# update active dict with new/changed timezone and write the new dictionary to JSON
+# TODO: this should maybe only write to json on close instead of on every update
+def update_timezone(id: int, timezone: str):
+    user_timezones[str(id)] = timezone
+    with open(TIMEZONE_JSON_DIR, "w") as f:
+        json.dump(user_timezones, f)
 
 # load token from .env and run bot
 load_dotenv()
