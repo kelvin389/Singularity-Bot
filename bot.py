@@ -21,7 +21,6 @@ from views.confirmation_buttons import ConfirmationButtons
 from views.timezone_buttons import TimezoneButtons
 
 TIMEZONE_JSON_DIR = "user_timezones.json"
-LOCAL_TZINFO = zoneinfo.ZoneInfo("America/Vancouver")
 
 # dict {id: str(int): timezone: str}
 # id must be a string because in JSON, all keys are strings
@@ -132,7 +131,7 @@ def participants_to_users(host_id, participants_lst):
     return user_lst
 
 def to_datetime(time: str, input_day: int, input_month: int, input_year: int, timezone: zoneinfo.ZoneInfo):
-    now = datetime.datetime.now(LOCAL_TZINFO)
+    now = datetime.datetime.now().astimezone()
 
     day = input_day if input_day else now.day
     month = input_month if input_month else now.month
