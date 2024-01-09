@@ -1,5 +1,5 @@
 import discord
-from ..bot import TimezoneModal # TODO: this will change once the modal gets moved to its own file
+from ..modals.timezone_modal import TimezoneModal
 
 class TimezoneButtons(discord.ui.View):
     def __init__(self):
