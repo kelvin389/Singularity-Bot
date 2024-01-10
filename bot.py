@@ -131,7 +131,7 @@ def participants_to_users(host_id, participants_lst):
     return user_lst
 
 def to_datetime(time: str, input_day: int, input_month: int, input_year: int, timezone: zoneinfo.ZoneInfo):
-    now = datetime.datetime.now().astimezone()
+    now = datetime.datetime.now().astimezone() # astimezone() defaults to the local timezone
 
     day = input_day if input_day else now.day
     month = input_month if input_month else now.month
@@ -143,11 +143,13 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int, ti
     hr = int(match.group(1))
     min = int(match.group(2)) if match.group(2) else 0
     period = match.group(3).lower() if match.group(3) else None
+
     # convert 12 hour to 24 hour time
     # period will be discarded if a 24hr time is inputted with period (eg. 15:00am will be taken as 15:00 = 3:00pm)
-    if (hr < 12 and period == "pm") or (hr == 12 and period == "am"):
+    if (hr < 12 and period == "pm"):
         hr += 12
-        hr %= 24 # wrap 24:XX to 0:XX
+    elif hr == 12 and period == "am":
+        hr = 0
 
     event_datetime = datetime.datetime(year, month, day, hr, min, tzinfo=timezone)
 
