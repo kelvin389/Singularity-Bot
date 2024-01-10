@@ -96,7 +96,7 @@ async def make_request(interaction: discord.Interaction, event: str, participant
     relative_time = f"<t:{event_timestamp}:R>"
 
     embed = discord.Embed()
-    embed.title = f'{event} at {absolute_time} ({relative_time})'
+    embed.title = f"{event} at {absolute_time} ({relative_time})"
     embed.colour = discord.Colour.blue()
     embed.set_thumbnail(url="https://i.kym-cdn.com/photos/images/original/001/708/596/db3.jpeg")
     embed.set_footer(text="!note [message] to leave a note (doesnt work lol)")
@@ -169,6 +169,7 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int, ti
 # TODO: this should maybe only write to json on close instead of on every update
 def update_timezone(id: int, timezone: str):
     user_timezones[str(id)] = timezone
+    # opening the file with type 'w' causes writes (dump) to overwrite the entire file
     with open(TIMEZONE_JSON_DIR, "w") as f:
         json.dump(user_timezones, f)
 

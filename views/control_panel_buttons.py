@@ -15,9 +15,9 @@ class ControlPanelButtons(discord.ui.View):
         for u in self.event_obj.users:
             if u.id != host_id:
                 user = u.discord_user
-                await user.send(f'<@{host_id}> pinged you!')
-        await interaction.response.send_message(f'You pinged all participants')
-        print(f'{host_id} pinged all participants')
+                await user.send(f"<@{host_id}> pinged you!")
+        await interaction.response.send_message(f"You pinged all participants")
+        print(f"{host_id} pinged all participants")
 
     @discord.ui.button(label="Cancel Event", row=1, style=discord.ButtonStyle.blurple)
     async def click_cancel(self, interaction: discord.Interaction, button: discord.ui.button):
@@ -29,6 +29,6 @@ class ControlPanelButtons(discord.ui.View):
 
             if u.id != host_id:
                 user = u.discord_user
-                await user.send(f'<@{host_id}> has cancelled the event')
+                await user.send(f"<@{host_id}> has cancelled the event")
         await interaction.response.send_message("Cancel successful")
-        print(f'{host_id} cancelled event')
+        print(f"{host_id} cancelled event")
