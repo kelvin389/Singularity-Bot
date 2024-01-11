@@ -1,5 +1,5 @@
 import discord
-from .. import Event, User
+from ..objs import Event, User
 
 # Update all user's status messages when someone changes their status
 async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event.Event):

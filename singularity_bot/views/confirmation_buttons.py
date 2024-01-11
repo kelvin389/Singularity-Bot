@@ -1,7 +1,8 @@
 import discord
-from .. import Event, User
-from control_panel_buttons import ControlPanelButtons
-from ready_buttons import ReadyButtons
+from ..objs import Event
+from ..objs import User
+from .control_panel_buttons import ControlPanelButtons
+from .ready_buttons import ReadyButtons
 
 class ConfirmationButtons(discord.ui.View):
     event_obj: Event.Event

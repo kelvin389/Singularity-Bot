@@ -1,5 +1,5 @@
 import discord
-from .. import Event
+from ..objs import Event
 
 class ControlPanelButtons(discord.ui.View):
     event_obj: Event.Event

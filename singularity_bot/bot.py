@@ -15,10 +15,11 @@ from discord import app_commands
 from discord.ext import commands
 
 # Custom Module Imports
-import User
-import Event
-from views.confirmation_buttons import ConfirmationButtons
-from views.timezone_buttons import TimezoneButtons
+from .objs import User
+from .objs import Event
+
+from .views.confirmation_buttons import ConfirmationButtons
+from .views.timezone_buttons import TimezoneButtons
 
 TIMEZONE_JSON_DIR = "user_timezones.json"
 
@@ -52,7 +53,7 @@ async def sync(interaction: discord.Interaction):
 @bot.tree.command(name="timezone", description="choose your timezone")
 async def choose_timezone(interaction: discord.Interaction):
     tz_buttons = TimezoneButtons()
-    await interaction.response.send_message(content="epic infographic here", view=tz_buttons, ephemeral=True)
+    await interaction.response.send_message(content="epic infographic here (click link, copy timezone, come back to discord, click input, paste)", view=tz_buttons, ephemeral=True)
 
 # request command for creating an event
 @bot.tree.command(name="request", description="This command creates a event with participants")
