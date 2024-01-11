@@ -1,9 +1,8 @@
 import discord
 import zoneinfo
-#from .. import update_timezone
+#from ..bot import update_timezone
 
 # TODO: for some reason the title doesnt work
-# TODO: move this to a new file
 class TimezoneModal(discord.ui.Modal, title="ASDFASDFASDF DFQW FQW EF WQDFAS DF"):
     tz = discord.ui.TextInput(label="Timezone", placeholder="eg. America/Vancouver")
 
