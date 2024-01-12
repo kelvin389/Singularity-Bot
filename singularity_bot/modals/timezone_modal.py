@@ -4,7 +4,7 @@ from .. import util
 #from ..bot import update_timezone
 
 # TODO: for some reason the title doesnt work
-class TimezoneModal(discord.ui.Modal, title="Input your timezone"):
+class TimezoneModal(discord.ui.Modal, title="Input the value you copied from the timezone picker"):
     tz = discord.ui.TextInput(label="Timezone", placeholder="eg. America/Vancouver")
     user_timezones: dict
 
