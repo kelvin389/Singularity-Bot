@@ -69,6 +69,7 @@ def to_datetime(time: str, input_day: int, input_month: int, input_year: int, ti
 # TODO: this should maybe only write to json on close instead of on every update
 def update_timezone(user_timezones: dict, id: int, timezone: str):
     user_timezones[str(id)] = timezone
+    write_timezone_json(user_timezones)
 
 def read_timezone_json():
     with open(Config.TIMEZONE_JSON_DIR, "r") as f:

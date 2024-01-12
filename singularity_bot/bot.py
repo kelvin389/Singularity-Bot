@@ -11,6 +11,7 @@ from discord import app_commands
 from discord.ext import commands
 
 # Custom Module Imports
+from .modals.timezone_modal import TimezoneModal
 from .objs.Event import Event
 from .views.confirmation_buttons import ConfirmationButtons
 from .views.timezone_buttons import TimezoneButtons
@@ -39,7 +40,10 @@ async def sync(interaction: discord.Interaction):
 
 @bot.tree.command(name="timezone", description="choose your timezone")
 async def choose_timezone(interaction: discord.Interaction):
-    tz_buttons = TimezoneButtons()
+    # create the modal here because it needs access to user_timezones.
+    # this also should slightly decreases the delay between pressing the input button and receiving the modal on the user end
+    tz_modal = TimezoneModal(user_timezones)
+    tz_buttons = TimezoneButtons(tz_modal)
     await interaction.response.send_message(content="epic infographic here (click link, copy timezone, come back to discord, click input, paste)", view=tz_buttons, ephemeral=True)
 
 # request command for creating an event
