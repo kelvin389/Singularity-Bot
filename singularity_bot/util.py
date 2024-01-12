@@ -74,8 +74,7 @@ def update_timezone(user_timezones: dict, id: int, timezone: str):
 def read_timezone_json():
     with open(Config.TIMEZONE_JSON_DIR, "r") as f:
         try:
-            user_timezones = json.load(f)
-            return user_timezones
+            return json.load(f)
         except:
             return {}
 
