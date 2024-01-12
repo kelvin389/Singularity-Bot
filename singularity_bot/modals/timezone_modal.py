@@ -3,12 +3,11 @@ import zoneinfo
 #from ..bot import update_timezone
 
 # TODO: for some reason the title doesnt work
-class TimezoneModal(discord.ui.Modal, title="ASDFASDFASDF DFQW FQW EF WQDFAS DF"):
+class TimezoneModal(discord.ui.Modal, title="Input your timezone"):
     tz = discord.ui.TextInput(label="Timezone", placeholder="eg. America/Vancouver")
 
     def __init__(self):
         super().__init__()
-        self.title = ""
     
     async def on_submit(self, interaction: discord.Interaction):
         try:
