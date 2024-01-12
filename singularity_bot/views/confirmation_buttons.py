@@ -1,13 +1,13 @@
 import discord
-from ..objs import Event
-from ..objs import User
+from ..objs.Event import Event
+from ..objs.User import User
 from .control_panel_buttons import ControlPanelButtons
 from .ready_buttons import ReadyButtons
 
 class ConfirmationButtons(discord.ui.View):
-    event_obj: Event.Event
+    event_obj: Event
 
-    def __init__(self, event_obj: Event.Event):
+    def __init__(self, event_obj: Event):
         super().__init__()
         self.event_obj = event_obj 
 

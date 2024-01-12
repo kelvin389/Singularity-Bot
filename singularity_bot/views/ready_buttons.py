@@ -1,8 +1,9 @@
 import discord
-from ..objs import Event, User
+from ..objs.Event import Event
+from ..objs.User import User
 
 # Update all user's status messages when someone changes their status
-async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event.Event):
+async def update_status(interaction: discord.Interaction, new_status: int, event_obj: Event):
     user_id = interaction.user.id # id of the user who wants to change their status
     user_lst = event_obj.users
 
@@ -20,9 +21,9 @@ async def update_status(interaction: discord.Interaction, new_status: int, event
         await u.status_message.edit(embed=event_obj.embed)
 
 class ReadyButtons(discord.ui.View): 
-    event_obj: Event.Event
+    event_obj: Event
 
-    def __init__(self, event_obj: Event.Event):
+    def __init__(self, event_obj: Event):
         super().__init__()
         self.event_obj = event_obj
 

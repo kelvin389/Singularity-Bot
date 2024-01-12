@@ -1,10 +1,10 @@
 import discord
-from ..objs import Event
+from ..objs.Event import Event
 
 class ControlPanelButtons(discord.ui.View):
-    event_obj: Event.Event
+    event_obj: Event
 
-    def __init__(self, event_obj: Event.Event):
+    def __init__(self, event_obj: Event):
         super().__init__()
         self.event_obj = event_obj 
 

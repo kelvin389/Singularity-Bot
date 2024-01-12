@@ -1,18 +1,18 @@
 import discord
 
-STATUS_HOST = 0
-STATUS_UNDECIDED = 1
-STATUS_ACCEPTED = 2
-STATUS_REJECTED = 3
-STATUS_MAYBE = 4
-
-EMOJI_HOST = "👑"
-EMOJI_UNDECIDED = "❔"
-EMOJI_ACCEPTED = "✅"
-EMOJI_REJECTED = "❌"
-EMOJI_MAYBE = "🤔"
-
 class User:
+    STATUS_HOST = 0
+    STATUS_UNDECIDED = 1
+    STATUS_ACCEPTED = 2
+    STATUS_REJECTED = 3
+    STATUS_MAYBE = 4
+
+    EMOJI_HOST = "👑"
+    EMOJI_UNDECIDED = "❔"
+    EMOJI_ACCEPTED = "✅"
+    EMOJI_REJECTED = "❌"
+    EMOJI_MAYBE = "🤔"
+
     discord_user: discord.User # discord.py User object. little confusing ; may rename this class in the future
     status_message: discord.Message # the instance of the message containing the status embed sent to this user
     id_str: str
@@ -32,16 +32,16 @@ class User:
     def set_status(self, status):
         self._status = status
         
-        if status == STATUS_HOST:
-            self.emoji = EMOJI_HOST
-        elif status == STATUS_UNDECIDED:
-            self.emoji = EMOJI_UNDECIDED
-        elif status == STATUS_ACCEPTED:
-            self.emoji = EMOJI_ACCEPTED
-        elif status == STATUS_REJECTED:
-            self.emoji = EMOJI_REJECTED
-        elif status == STATUS_MAYBE:
-            self.emoji = EMOJI_MAYBE
+        if status == self.STATUS_HOST:
+            self.emoji = self.EMOJI_HOST
+        elif status == self.STATUS_UNDECIDED:
+            self.emoji = self.EMOJI_UNDECIDED
+        elif status == self.STATUS_ACCEPTED:
+            self.emoji = self.EMOJI_ACCEPTED
+        elif status == self.STATUS_REJECTED:
+            self.emoji = self.EMOJI_REJECTED
+        elif status == self.STATUS_MAYBE:
+            self.emoji = self.EMOJI_MAYBE
         else:
             self.emoji = "how"
 
